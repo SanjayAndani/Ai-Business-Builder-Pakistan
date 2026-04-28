@@ -1,79 +1,91 @@
-import express from "express";
-import { createServer as createViteServer } from "vite";
-import path from "path";
-import dotenv from "dotenv";
-import * as prettier from "prettier";
+import express from 'express';
+import { createServer as createViteServer } from 'vite';
+import path from 'path';
+import dotenv from 'dotenv';
+import * as prettier from 'prettier';
 
 dotenv.config();
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 8080;
+  const isProduction = process.env.NODE_ENV === 'production';
 
-  app.use(express.json());
+  app.use(express.json({ limit: '10mb' }));
 
-  // API Route for code formatting
-  app.post("/api/format", async (req, res) => {
+  app.post('/api/format', async (req, res) => {
     try {
       const { files } = req.body;
+
       if (!files || !Array.isArray(files)) {
-        return res.status(400).json({ error: "Invalid files array" });
+        return res.status(400).json({ error: 'Invalid files array' });
       }
 
       const formattedFiles = await Promise.all(
         files.map(async (file: any) => {
-          if (!file.content) return file;
-          try {
-            let parser = "";
-            const name = file.name.toLowerCase();
-            if (name.endsWith(".html")) parser = "html";
-            else if (name.endsWith(".css")) parser = "css";
-            else if (name.endsWith(".js") || name.endsWith(".jsx")) parser = "babel";
-            else if (name.endsWith(".ts") || name.endsWith(".tsx")) parser = "typescript";
-            else if (name.endsWith(".json")) parser = "json";
+          if (!file?.content || !file?.name) return file;
 
-            if (parser) {
-              const formattedContent = await prettier.format(file.content, {
-                parser,
-                semi: true,
-                singleQuote: true,
-                printWidth: 100,
-                trailingComma: "es5",
-              });
-              return { ...file, content: formattedContent };
-            }
-          } catch (e) {
-            console.warn(`Prettier failed to format ${file.name} on server:`, e);
+          try {
+            let parser: prettier.BuiltInParserName | '' = '';
+            const name = file.name.toLowerCase();
+
+            if (name.endsWith('.html')) parser = 'html';
+            else if (name.endsWith('.css')) parser = 'css';
+            else if (name.endsWith('.js') || name.endsWith('.jsx')) parser = 'babel';
+            else if (name.endsWith('.ts') || name.endsWith('.tsx')) parser = 'typescript';
+            else if (name.endsWith('.json')) parser = 'json';
+
+            if (!parser) return file;
+
+            const formattedContent = await prettier.format(file.content, {
+              parser,
+              semi: true,
+              singleQuote: true,
+              printWidth: 100,
+              trailingComma: 'es5',
+            });
+
+            return { ...file, content: formattedContent };
+          } catch (error) {
+            console.warn(`Prettier failed to format ${file.name}:`, error);
+            return file;
           }
-          return file;
         })
       );
 
-      res.json({ files: formattedFiles });
+      return res.json({ files: formattedFiles });
     } catch (error: any) {
-      console.error("Formatting error:", error);
-      res.status(500).json({ error: error.message });
+      console.error('Formatting error:', error);
+      return res.status(500).json({ error: error.message || 'Server error' });
     }
   });
 
-  // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
+  if (!isProduction) {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
+      server: {
+        middlewareMode: true,
+        host: '0.0.0.0',
+      },
+      appType: 'spa',
     });
+
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), "dist");
+    const distPath = path.join(process.cwd(), 'dist');
+
     app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
+
+    app.get('*', (_req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on 0.0.0.0:${PORT}`);
   });
 }
 
-startServer();
+startServer().catch((error) => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+});
