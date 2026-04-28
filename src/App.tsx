@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark, prism as oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -39,7 +39,7 @@ import {
   CheckCircle2,
   Layout,
   Info,
-  Image as ImageIcon,
+  ImageIcon,
   Sparkles,
   Quote,
   RefreshCw,
@@ -762,9 +762,9 @@ export default function App() {
                           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 text-white text-[9px] font-black uppercase tracking-widest mb-6">
                             <Rocket size={12} strokeWidth={3} /> Strategy Blueprint
                           </div>
-                          <h3 className="text-3xl font-black font-display text-slate-900 mb-6 leading-tight max-w-xl group-hover:text-brand transition-colors duration-500">{result.plan.concept}</h3>
+                          <h3 className="text-3xl font-black font-display text-slate-900 mb-6 leading-tight max-w-xl group-hover:text-brand transition-colors duration-500">{result.plan.productIdea}</h3>
                           <div className="h-px bg-slate-100 w-full mb-8" />
-                          <div className="grid sm:grid-cols-2 gap-10">
+                          <div className="grid sm:grid-cols-1 gap-10">
                              <div>
                                 <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-4 block flex items-center gap-2">
                                   <Users size={12} /> Market Target
@@ -772,14 +772,6 @@ export default function App() {
                                 <p className="text-sm font-bold text-slate-700 leading-relaxed bg-slate-50 p-5 rounded-2xl border border-slate-100 italic relative">
                                   <Quote size={12} className="absolute -top-1 -left-1 text-brand opacity-20" />
                                   {result.plan.audience}
-                                </p>
-                             </div>
-                             <div>
-                                <label className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-4 block flex items-center gap-2">
-                                  <RefreshCw size={12} /> Revenue Model
-                                </label>
-                                <p className="text-sm font-bold text-slate-700 leading-relaxed bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                                  {result.plan.revenueModel}
                                 </p>
                              </div>
                           </div>
